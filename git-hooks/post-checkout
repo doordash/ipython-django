@@ -1,10 +1,13 @@
 #!/bin/sh
 
 # Chain to company-managed hook if present
-_dd_company_hook="/Library/DoorDash/githooks/$(basename "$0")"
-if [ -x "$_dd_company_hook" ]; then
-    "$_dd_company_hook" "$@" || exit $?
+_dd_hook_type=$(basename "$0")
+_dd_company_hook="/Library/DoorDash/githooks/$_dd_hook_type"
+if [ -x "$_dd_company_hook" ] && [ "${__DD_WRAPPER_ACTIVE:-}" != "$_dd_hook_type" ]; then
+    "$_dd_company_hook" "$@"
+    exit $?
 fi
+unset __DD_WRAPPER_ACTIVE
 
 
 git submodule init
