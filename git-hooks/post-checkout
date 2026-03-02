@@ -1,4 +1,11 @@
 #!/bin/sh
 
+# Chain to company-managed hook if present
+_dd_company_hook="/Library/DoorDash/githooks/$(basename "$0")"
+if [ -x "$_dd_company_hook" ]; then
+    "$_dd_company_hook" "$@" || exit $?
+fi
+
+
 git submodule init
 git submodule update
