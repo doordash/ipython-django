@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Scaffolded by batch-pr.sh — chaining shim for hook: reference-transaction
+#
+# ── Control-flow note for future editors ──────────────────────────────
+# This shim has TWO invocation paths.  Only one reaches the code below
+# the if-block:
+#
+#   Path 1 — Initial call (wrapper not yet active):
+#     The if-body runs: calls the company wrapper, then "exit $?" ends
+#     this script immediately.  The wrapper will set __DD_WRAPPER_ACTIVE
+#     and re-enter this shim (Path 2).  NO CODE below "unset" runs here.
+#
+#   Path 2 — Re-entry from the wrapper (__DD_WRAPPER_ACTIVE is set):
+#     The if-test fails, execution falls through to "unset" and into
+#     any repo-local hook logic that follows.
+#
+# If you add hook logic to this file, place it AFTER the "unset" line.
+# It will execute only on Path 2 (the re-entry), which is the correct
+# and intended behaviour.
+# ──────────────────────────────────────────────────────────────────────
+
+# Chain to company-managed hook if present
+_dd_hook_type=$(basename "$0")
+_dd_company_hook="/Library/DoorDash/git/hook_chains/$_dd_hook_type"
+if [ -x "$_dd_company_hook" ] && [ "${__DD_WRAPPER_ACTIVE:-}" != "$_dd_hook_type" ]; then
+    "$_dd_company_hook" "$@"
+    exit $?  # ← terminates this invocation; the wrapper re-enters via Path 2
+fi
+unset __DD_WRAPPER_ACTIVE
+
+# ── Your repo-local hook logic goes here (runs only on re-entry Path 2) ──
